@@ -1,16 +1,17 @@
 /**
- * Node.js implementation of cryptoe, a high-level crypto library
- * providing easy interoperability between client- and server-side
- * environments.
- *
- * This is the version of cryptoe for node.js
+ * Client-size javascript (browser) version of cryptoe, a
+ * high-level crypto library providing easy interoperability
+ * between client- and server-side environments.
  *
  * @author Tomasz Truderung
  *
  * Copyright (c) 2015 Tomasz Truderung
  */
 
-cryptoe = exports;
+var cryptoe = (function() {
+cryptoe = {}; // the cryptoe module object
+
+/////// BEGIN OF THE MODULE ///////
 
 
 //////////////////////////////////////////////////////////////////////
@@ -361,16 +362,7 @@ function messageFromBinString(binstr) {
     return newMessage(arr, true);
 }
 
-/** 
- * Converts a binary string (one character per byte) to base64.
- */
-function btoa(binstr) {
-    return (new Buffer(binstr, 'binary')).toString('base64');
-}
 
-/** 
- * Converts a base64 string to a binary string (one character per byte)
- */
-function atob(binstr) {
-    return (new Buffer(binstr, 'base64')).toString('binary');
-}
+/////// END OF THE MODULE ///////
+return cryptoe;
+}());
