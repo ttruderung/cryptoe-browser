@@ -1,6 +1,4 @@
 
-var m = cryptoe.emptyMessage();
-
 describe('Message', function(){
   describe('empty', function(){
     it('returns an empty message ', function(){
@@ -112,6 +110,11 @@ describe('Message', function(){
         assert.equal( m.takeInt32(), 0x7fffffff);
         m.appendUint32(0xffffffff);
         assert.equal( m.takeUint32(), 0xffffffff);
+
+        m.appendBytes([33,44,55]);
+        assert.equal( m.takeByte(), 33 );
+        assert.equal( m.takeByte(), 44 );
+        assert.equal( m.takeByte(), 55 );
     });   
 
     it('work for long time', function(){
@@ -190,7 +193,6 @@ describe('Message', function(){
   describe('different messages', function(){
     it('should not interfere', function() {
         var m0 = cryptoe.emptyMessage();
-        m.appendInt32(12345);
         var m1 = m0.slice(0); // m1 is a clone of m0
         m0.appendInt32(324);
         var s0 = m0.toHexString();
