@@ -1,5 +1,3 @@
-var cryptoe = require('../cryptoe');
-var assert = require("assert")
 
 var m = cryptoe.emptyMessage();
 

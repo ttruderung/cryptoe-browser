@@ -16,7 +16,12 @@
   "ignore": [
     "**/.*",
     "node_modules",
-    "bower_components",
+    "components",
     "test"
-  ]
+  ],
+  "devDependencies": {
+    "mocha": "~2.1.0",
+    "node-assert": "git://github.com/Jxck/assert",
+    "jquery": "~2.1.3"
+  }
 }
