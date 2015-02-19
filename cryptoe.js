@@ -25,9 +25,10 @@ cryptoe = {}; // the cryptoe module object
  * @param bytes: (Uint8Array) array of bytes 
  *
  * @param owner: (boolean) specifies if the created message owns the 
- *               byte array given as the first parameter. If yes, the
- *               message can change the values store in bytes, otherwise
- *               it has to re-allocate before making any changes.
+ *               underlying buffer (bytes.buffer). If yes, the
+ *               message can change the values store in bytes,
+ *               otherwise it has to re-allocate before making
+ *               any changes.
  *
  * @return a new message object encapsulating 'bytes'
  */
@@ -215,6 +216,19 @@ function newMessage(bytes, owner) {
     }
 
     /**
+     * Appends (an array of) bytes. It accepts anything that
+     * has the property bytes.length and can be indexed by bytes[i].
+     * Data is copied.
+     */
+    message.appendBytes = function(bytes) {
+        if (bytes.length === undefined) throw new Error('Message.appendBytes: Type error')
+        var len = bytes.length;
+        for (var i=0; i<len; ++i) {
+            message.appendByte(bytes[i]);
+        }
+    }
+
+    /**
      * Appends a byte (unsigned 8-bit integer).
      */
     message.appendByte = function(b) {
@@ -288,6 +302,13 @@ function newMessage(bytes, owner) {
         }
     }
 
+    /**
+     * Should not be used outside the module.
+     */
+    message._rep = function() {
+        return bytes;
+    }
+
 
     // Return the message object
     return message;
@@ -311,8 +332,10 @@ cryptoe.emptyMessage = function () {
 /**
  * Creates a message from an array of bytes. It accepts anything that
  * has the property bytes.length and can be indexed by bytes[i].
+ * Data is copied.
  */
 cryptoe.messageFromBytes = function(bytes) {
+    if (bytes.length === undefined) throw new Error('messageFromBytes: Type error')
     var len = bytes.length;
     var arr = new Uint8Array(len);
     for (var i=0; i<len; ++i) {
@@ -360,6 +383,57 @@ function messageFromBinString(binstr) {
         arr[i] = binstr.charCodeAt(i);
     }
     return newMessage(arr, true);
+}
+
+function newMessageFromBuffer(buffer) {
+    var bytes = new Uint8Array(buffer);
+    return newMessage(bytes, false);
+}
+
+//////////////////////////////////////////////////////////////////////
+// SYMMETRIC-KEY ENCRYPTION
+
+
+function newSymmetricKey(cryptoKey) {
+    // the key object to be returned
+    var key = { __ck:cryptoKey };
+
+    key.encrypt = function (message) {
+        // Pick a random IV
+        var iv = crypto.getRandomValues(new Uint8Array(16));
+        // Encrypt
+        var algo = {name: "AES-GCM", iv: iv, tagLength: 128};
+        return crypto.subtle.encrypt(algo, cryptoKey, message._rep())
+               .then(function (raw_result) { 
+                    // Now we have the (raw) result of encryption.
+                    // Prepend this result with the IV:
+                    var result = newMessageFromBuffer(iv);
+                    result.appendMessage(newMessageFromBuffer(raw_result))
+                    return result;
+               });
+    }
+
+    key.decrypt = function (message) {
+        // Take the iv (first 16 bytes of the message
+        var iv = message.takeMessage(16);
+        // Decrypt the rest 
+        var algo = {name: "AES-GCM", iv: iv._rep(), tagLength: 128};
+        return crypto.subtle.decrypt(algo, cryptoKey, message._rep())
+               .then(function (res) {
+                   // console.log(' *** res:', newMessageFromBuffer(res).toString());
+                   return newMessageFromBuffer(res);
+               });
+    }
+
+    // Return the key (this) object
+    return key;
+};
+
+cryptoe.generateSymmetricKey = function () {
+    return crypto.subtle.generateKey({name:"AES-GCM", length:256}, false, ["encrypt", "decrypt"])
+           .then(function (key) {
+               return newSymmetricKey(key);
+            });
 }
 
 
