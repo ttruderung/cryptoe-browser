@@ -1,0 +1,22 @@
+{
+  "name": "cryptoe-browser",
+  "description": "Crypto made Easy",
+  "version": "0.0.1",
+  "homepage": "https://github.com/ttruderung/cryptoe-browser",
+  "authors": [
+    "Tomasz Truderung <ttruderung@gmail.com>"
+  ],
+  "main": "cryptoe.js",
+  "keywords": [
+    "web",
+    "cryptography",
+    "high-level"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test"
+  ]
+}
