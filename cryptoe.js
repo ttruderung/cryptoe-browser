@@ -390,10 +390,15 @@ function newMessageFromBuffer(buffer) {
     return newMessage(bytes, false);
 }
 
+
+
 //////////////////////////////////////////////////////////////////////
 // SYMMETRIC-KEY ENCRYPTION
 
 
+/**
+ * Private constructor for symmetic keys.
+ */
 function newSymmetricKey(cryptoKey) {
     // the key object to be returned
     var key = { __ck:cryptoKey };
@@ -429,6 +434,12 @@ function newSymmetricKey(cryptoKey) {
     return key;
 };
 
+/**
+ * Generate a new symmetic key. 
+ *
+ * A symmetric key has, most importantly, mehtods 
+ * encrypt(m) and decrypt(m).
+ */
 cryptoe.generateSymmetricKey = function () {
     return crypto.subtle.generateKey({name:"AES-GCM", length:256}, false, ["encrypt", "decrypt"])
            .then(function (key) {
