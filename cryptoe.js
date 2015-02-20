@@ -391,13 +391,26 @@ function newMessageFromBuffer(buffer) {
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// RANDOM
+
+/**
+ * Returns a random message of the given length (in bytes).
+ */
+cryptoe.random = function(length) {
+    if (length===undefined) throw new Error('random: no lenght given');
+    var r = crypto.getRandomValues(new Uint8Array(length));
+    return newMessage(r, false);
+}
+
 
 //////////////////////////////////////////////////////////////////////
 // SYMMETRIC-KEY ENCRYPTION
 
 
 /**
- * Private constructor for symmetic keys.
+ * Private constructor for symmetic keys. It encapsuates a
+ * cryptoKey object (of web cryptography API).
  */
 function newSymmetricKey(cryptoKey) {
     // the key object to be returned
@@ -405,14 +418,15 @@ function newSymmetricKey(cryptoKey) {
 
     key.encrypt = function (message) {
         // Pick a random IV
-        var iv = crypto.getRandomValues(new Uint8Array(16));
+        var iv = cryptoe.random(16);
         // Encrypt
-        var algo = {name: "AES-GCM", iv: iv, tagLength: 128};
+        var algo = {name: "AES-GCM", iv: iv._rep(), tagLength: 128};
         return crypto.subtle.encrypt(algo, cryptoKey, message._rep())
                .then(function (raw_result) { 
                     // Now we have the (raw) result of encryption.
                     // Prepend this result with the IV:
-                    var result = newMessageFromBuffer(iv);
+                    var result = cryptoe.emptyMessage();
+                    result.appendMessage(iv);
                     result.appendMessage(newMessageFromBuffer(raw_result))
                     return result;
                });
