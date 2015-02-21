@@ -414,7 +414,7 @@ cryptoe.random = function(length) {
  */
 function newSymmetricKey(cryptoKey) {
     // the key object to be returned
-    var key = { __ck:cryptoKey };
+    var key = { _ck:cryptoKey };
 
     key.encrypt = function (message) {
         // Pick a random IV
@@ -439,8 +439,13 @@ function newSymmetricKey(cryptoKey) {
         var algo = {name: "AES-GCM", iv: iv._rep(), tagLength: 128};
         return crypto.subtle.decrypt(algo, cryptoKey, message._rep())
                .then(function (res) {
-                   // console.log(' *** res:', newMessageFromBuffer(res).toString());
                    return newMessageFromBuffer(res);
+               });
+    }
+
+    key.asMessage = function () {
+        return crypto.subtle.exportKey('raw', cryptoKey).then(function(rawKey){ 
+                    return newMessageFromBuffer(rawKey);  
                });
     }
 
@@ -455,10 +460,17 @@ function newSymmetricKey(cryptoKey) {
  * encrypt(m) and decrypt(m).
  */
 cryptoe.generateSymmetricKey = function () {
-    return crypto.subtle.generateKey({name:"AES-GCM", length:256}, false, ["encrypt", "decrypt"])
-           .then(function (key) {
-               return newSymmetricKey(key);
-            });
+    return crypto.subtle.generateKey({name:"AES-GCM", length:256}, true, ["encrypt", "decrypt"])
+           .then(newSymmetricKey);
+}
+
+/**
+ * Convert a message to a symmetric key.
+ */
+cryptoe.symmetricKeyFromMessage = function (message) {
+    var algo = {name:"AES-GCM", length:128};
+    return crypto.subtle.importKey('raw', message._rep().buffer, algo, true, ["encrypt", "decrypt"])
+            .then(newSymmetricKey);
 }
 
 
