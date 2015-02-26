@@ -20,64 +20,37 @@ describe('Crypto', function(){
     describe('Symmetric encryption', function(){
 
         it('works for some messages', function(done) {
-            // take some message m
-            var m = cryptoe.messageFromString('ala ma kota w kącie');
-            // generate a symmetric key
-            cryptoe.generateSymmetricKey().then(function(key) { 
-                key.encrypt(m) // encrypt m using this key
-                   .then(key.decrypt) // decrypt the result of encryption
-                   .then(function(result){  // take the result of decryption
-                        // It should be equal to m
-                        assert.equal(m.toHexString(), result.toHexString());
-                        done();
-                   })
-                   .catch(done);
-            });
-        })
+            co(function*(){
+                var m = cryptoe.messageFromString('ala ma kota w kącie');
+                var key = yield cryptoe.generateSymmetricKey();
+                var e = yield key.encrypt(m);
+                var d = yield key.decrypt(e);
+                assert.equal(m.toHexString(), d.toHexString());
+            }).then(done,done);
+        });
 
         it('works for long messages', function(done) {
-            // take some long message m
-            var m = cryptoe.random(50000);
-            // generate a symmetric key
-            cryptoe.generateSymmetricKey().then(function(key) { 
-                key.encrypt(m) // encrypt m using this key
-                   .then(key.decrypt) // decrypt the result of encryption
-                   .then(function(result){  // take the result of decryption
-                        // It should be equal to m
-                        assert.equal(m.toHexString(), result.toHexString());
-                        done();
-                   })
-                   .catch(done);
-            });
-        })
-
+            co(function*(){
+                var m = cryptoe.random(50000);
+                var key = yield cryptoe.generateSymmetricKey();
+                var e = yield key.encrypt(m);
+                var d = yield key.decrypt(e);
+                assert.equal(m.toHexString(), d.toHexString());
+            }).then(done,done);
+        });
 
         it('conversion of keys to/from messages works as expected', function(done) {
-            // take some message m
-            var m = cryptoe.messageFromString('ala ma kota w kącie');
+            co(function*(){
 
-            // generate a symmetric key
-            cryptoe.generateSymmetricKey().
-            // take this key
-            then(function (key) { 
-                // and convert it to a message
-                key.asMessage().
-                // convert it back to a key
-                then(cryptoe.symmetricKeyFromMessage).
-                // take this key (as key1) 
-                then(function (key1) { 
-                    // encrypt m using key and decrypt using key1
-                    key.encrypt(m).
-                    then(key1.decrypt).
-                    // take the result of the decryption
-                    then(function (dec) {
-                        // it should be equal to the original message
-                        assert.equal(m.toString(), m.toString());
-                        done();
-                    })
-                    .catch(done);
-                })
-             })
+                var m = cryptoe.messageFromString('ala ma kota w kącie');
+                var key = yield cryptoe.generateSymmetricKey();
+                // encode and decode the key
+                var key1 = yield cryptoe.symmetricKeyFromMessage(yield key.asMessage());
+                // encrypt with the original key, decrypt with the encoded and decoded
+                var d = yield key1.decrypt(yield key.encrypt(m));
+                assert.equal(m.toString(), d.toString());
+
+            }).then(done,done);
         });
 
     });  
