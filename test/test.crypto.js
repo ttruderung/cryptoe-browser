@@ -53,6 +53,23 @@ describe('Crypto', function(){
             }).then(done,done);
         });
 
+        it('works for some fixtures', function(done) {
+            co(function*(){
+
+                var key, m, c, d;
+                key = yield cryptoe.symmetricKeyFromMessage(cryptoe.messageFromHexString('68bbb32ae81b85752be3bc632293a31353f9df0a96976193474782cc13a5cdda'));
+                c   = cryptoe.messageFromHexString('3d66b89160a0ad129bbab5015f416b56ada6a0b136bc44982ec003a86802e99e008801');
+                d = yield key.decrypt(c);
+                assert.equal(d.toString(), 'łąka!');
+
+                key = yield  cryptoe.symmetricKeyFromMessage(cryptoe.messageFromHexString("f86a785d6d684d08dfc39fff6336b1b8ae18c469f356fe3dc30ec49ce3bf0dfa"));
+                c   = cryptoe.messageFromHexString("183f1f1583b28f61587d49f32fa0690a079eea13a62b02fa1219f30ee3f6d14fbd29cb");
+                d = yield key.decrypt(c);
+                assert.equal(d.toString(), 'łąka!');
+
+            }).then(done,done);
+        });
+
     });  
 
 });  
