@@ -418,7 +418,7 @@ function newSymmetricKey(cryptoKey) {
 
     key.encrypt = function (message) {
         // Pick a random IV
-        var iv = cryptoe.random(16);
+        var iv = cryptoe.random(12);
         // Encrypt
         var algo = {name: "AES-GCM", iv: iv._rep(), tagLength: 128};
         return crypto.subtle.encrypt(algo, cryptoKey, message._rep())
@@ -433,8 +433,8 @@ function newSymmetricKey(cryptoKey) {
     }
 
     key.decrypt = function (message) {
-        // Take the iv (first 16 bytes of the message
-        var iv = message.takeMessage(16);
+        // Take the iv (first 12 bytes of the message
+        var iv = message.takeMessage(12);
         // Decrypt the rest 
         var algo = {name: "AES-GCM", iv: iv._rep(), tagLength: 128};
         return crypto.subtle.decrypt(algo, cryptoKey, message._rep())
