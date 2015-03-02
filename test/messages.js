@@ -1,4 +1,3 @@
-
 describe('Message', function(){
   describe('empty', function(){
     it('returns an empty message ', function(){
@@ -72,9 +71,9 @@ describe('Message', function(){
         assert.equal(s0, s1);
     });
     it('should sometimes throw an exception', function(){
-        assert.throws(function(){
+        assert.throws(function(err){
                 cryptoe.messageFromHexString("12345"); // wrong length
-            })
+            }, cryptoe.Error);
     });
   });
 
@@ -176,17 +175,17 @@ describe('Message', function(){
   describe('take', function(){
     it('sometimes throws an exception', function(){
         assert.throws(function(){
-            cryptoe.emptyMessage.takeByte();
-        });
+            cryptoe.emptyMessage().takeByte();
+        }, cryptoe.Error);
         assert.throws(function(){
-            cryptoe.emptyMessage.takeInt16();
-        });
+            cryptoe.emptyMessage().takeInt16();
+        }, cryptoe.Error);
         assert.throws(function(){
-            cryptoe.emptyMessage.takeInt32();
-        });
+            cryptoe.emptyMessage().takeInt32();
+        }, cryptoe.Error);
         assert.throws(function(){
-            cryptoe.emptyMessage.takeMessage(5);
-        });
+            cryptoe.emptyMessage().takeMessage(5);
+        }, cryptoe.Error);
     });   
   });
 
@@ -205,3 +204,5 @@ describe('Message', function(){
   });
 
 })
+
+
