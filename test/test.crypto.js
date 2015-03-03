@@ -4,7 +4,6 @@
 
 function errorExpected(done) {
     return function (x) {
-        console.log(x);
         if (x.constructor !== cryptoe.Error)
             done(new Error("Cryptoe error expected"));
         else

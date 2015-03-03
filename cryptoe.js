@@ -16,15 +16,39 @@ cryptoe = {}; // the cryptoe module object
 //////////////////////////////////////////////////////////////////////
 //
 
-function CryptoeError(message) {
+function CryptoeError(description) {
   this.name = 'CryptoeError';
-  this.message = message || 'Unspecified error';
+  this.message = description || 'Unspecified error';
 }
 CryptoeError.prototype = Object.create(Error.prototype);
 CryptoeError.prototype.constructor = CryptoeError;
 
 cryptoe.Error = CryptoeError;
 
+function assertNumber(x) {
+    if (typeof x !== 'number')
+        throw new CryptoeError('Type Error: expected number');
+}
+
+function assertMessage(x) {
+    if (x.constructor !== newMessage)
+        throw new CryptoeError('Type Error: expected message');
+}
+
+function assertBytes(x) {
+    if (x.length === undefined || typeof x[0] !== 'number')
+        throw new CryptoeError('Type Error: expected array of bytes');
+}
+
+function assertString(x) {
+    if (typeof x !== 'string')
+        throw new CryptoeError('Type Error: expected number');
+}
+
+function assertHexDigit(x) {
+    if (! /[0-9,a-f]/.test(x) )
+        throw new CryptoeError('Type Error: expected a hexadecimal digit');
+}
 
 //////////////////////////////////////////////////////////////////////
 // MESSAGE
@@ -51,7 +75,7 @@ function newMessage(bytes, owner) {
 
     // The message object to be returned. All the public methods are
     // added to this object
-    var message = {};
+    var message = Object.create(messageProto);
 
     message.reallocationCounter = 0; // for testing 
     
@@ -82,6 +106,7 @@ function newMessage(bytes, owner) {
     message.slice = function(begin, end) {
         if (end===undefined) { end = message.len(); }
         if (end<0) { end = message.len() + end; }
+        assertNumber(begin); assertNumber(end);
         return newMessage(bytes.subarray(begin, end), false);
     }
 
@@ -199,6 +224,7 @@ function newMessage(bytes, owner) {
      * as a new message.
      */
     message.takeMessage = function(len) {
+        assertNumber(len);
         if (message.len()<len) throw new CryptoeError("Message.takeMessage: not enought data");
         var value = message.slice(0,len);
         message.skip(len);
@@ -209,6 +235,7 @@ function newMessage(bytes, owner) {
      * Skips n bytes (moves the beginning of the messages n bytes forward).
      */
     message.skip = function(n) {
+        assertNumber(n);
         if (bytes.byteLenght-n < 0) n = bytes.byteLenght;
         bytes = bytes.subarray(n); 
     }
@@ -219,6 +246,7 @@ function newMessage(bytes, owner) {
      * necessary).
      */
     message.appendMessage = function(msg) {
+        assertMessage(msg);
         var end = message.len(); // keep the end, the next line will change it
         var l = msg.len();
         enlargeBy(l); 
@@ -233,6 +261,7 @@ function newMessage(bytes, owner) {
      * Data is copied.
      */
     message.appendBytes = function(bytes) {
+        assertBytes(bytes);
         if (bytes.length === undefined) throw new CryptoeError('Message.appendBytes: Type error')
         var len = bytes.length;
         for (var i=0; i<len; ++i) {
@@ -244,6 +273,7 @@ function newMessage(bytes, owner) {
      * Appends a byte (unsigned 8-bit integer).
      */
     message.appendByte = function(b) {
+        assertNumber(b);
         var end = message.len();
         enlargeBy(1); 
         bytes[end] = b;
@@ -253,6 +283,7 @@ function newMessage(bytes, owner) {
      * Appends a signed 16-bit integer.
      */
     message.appendInt16 = function(value) {
+        assertNumber(value);
         var end = message.len();
         enlargeBy(2); 
         new DataView(bytes.buffer, bytes.byteOffset).setInt16(end, value);
@@ -264,6 +295,7 @@ function newMessage(bytes, owner) {
      * Appends a signed 16-bit integer.
      */
     message.appendInt32 = function(value) {
+        assertNumber(value);
         var end = message.len();
         enlargeBy(4); 
         new DataView(bytes.buffer, bytes.byteOffset).setInt32(end, value)
@@ -325,6 +357,7 @@ function newMessage(bytes, owner) {
     // Return the message object
     return message;
 }
+var messageProto = { constructor: newMessage };
 // END OF MESSAGE
 
 
@@ -347,6 +380,7 @@ cryptoe.emptyMessage = function () {
  * Data is copied.
  */
 cryptoe.messageFromBytes = function(bytes) {
+    assertBytes(bytes);
     if (bytes.length === undefined) throw new CryptoeError('messageFromBytes: Type error')
     var len = bytes.length;
     var arr = new Uint8Array(len);
@@ -361,6 +395,7 @@ cryptoe.messageFromBytes = function(bytes) {
  * The returned message is utf-8 encoded.
  */
 cryptoe.messageFromString = function (str) {
+    assertString(str);
     var binstr = unescape(encodeURIComponent(str)); // each character of utf8str represents one byte
     return messageFromBinString(binstr);
 }
@@ -369,10 +404,13 @@ cryptoe.messageFromString = function (str) {
  * Returns a message created from a hex-encoded string.
  */
 cryptoe.messageFromHexString = function(str) {
+    assertString(str);
     var len = str.length/2;
     if (Math.floor(len)!==len) throw new CryptoeError("Message: wrong length of the input string");
     var arr = new Uint8Array(len);
     for (var i=0; i<len; ++i) {
+        assertHexDigit(str[2*i]);
+        assertHexDigit(str[2*i+1]);
         arr[i] = parseInt(str[2*i], 16)*16 + parseInt(str[2*i+1], 16);
     }
     return newMessage(arr, true);
@@ -382,8 +420,13 @@ cryptoe.messageFromHexString = function(str) {
  * Creates a message from a base64 representation.
  */
 cryptoe.messageFromBase64 = function(base64str) {
-    var binstr = atob(base64str); // each character of binstr represents one byte
-    return messageFromBinString(binstr);
+    assertString(base64str);
+    try {
+        var binstr = atob(base64str); // each character of binstr represents one byte
+        return messageFromBinString(binstr);
+    } catch (err) {
+        throw new CryptoeError("Incorrecty encoded base64 string");
+    }
 }
 
 // PRIVATE FUNCTIONS
