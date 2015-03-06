@@ -155,9 +155,6 @@ describe('Message', function(){
         assert.throws(function(){
            cryptoe.messageFromBase64(5);
         }, cryptoe.Error);
-        assert.throws(function(){
-           cryptoe.messageFromBase64("t");
-        }, cryptoe.Error);
     });
   });
 

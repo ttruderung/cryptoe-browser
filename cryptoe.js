@@ -30,6 +30,11 @@ function assertNumber(x) {
         throw new CryptoeError('Type Error: expected number');
 }
 
+function assertByte(x) {
+    if (typeof x !== 'number' || x<0 || x>255)
+        throw new CryptoeError('Type Error: expected byte');
+}
+
 function assertMessage(x) {
     if (x.constructor !== newMessage)
         throw new CryptoeError('Type Error: expected message');
@@ -42,12 +47,12 @@ function assertBytes(x) {
 
 function assertString(x) {
     if (typeof x !== 'string')
-        throw new CryptoeError('Type Error: expected number');
+        throw new CryptoeError('Type Error: expected string');
 }
 
-function assertHexDigit(x) {
-    if (! /[0-9,a-f]/.test(x) )
-        throw new CryptoeError('Type Error: expected a hexadecimal digit');
+function assertHexString(x) {
+    if (typeof x !== 'string' || ! /^(([0-9,a-f][0-9,a-f])+$)/.test(x) )
+        throw new CryptoeError('Type Error: expected hex sting');
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -90,6 +95,7 @@ function newMessage(bytes, owner) {
      * Returns the i-th byte of the message
      */
     message.byteAt = function(n) {
+        assertNumber(n);
         return bytes[n];
     }
 
@@ -273,7 +279,7 @@ function newMessage(bytes, owner) {
      * Appends a byte (unsigned 8-bit integer).
      */
     message.appendByte = function(b) {
-        assertNumber(b);
+        assertByte(b);
         var end = message.len();
         enlargeBy(1); 
         bytes[end] = b;
@@ -404,13 +410,10 @@ cryptoe.messageFromString = function (str) {
  * Returns a message created from a hex-encoded string.
  */
 cryptoe.messageFromHexString = function(str) {
-    assertString(str);
+    assertHexString(str);
     var len = str.length/2;
-    if (Math.floor(len)!==len) throw new CryptoeError("Message: wrong length of the input string");
     var arr = new Uint8Array(len);
     for (var i=0; i<len; ++i) {
-        assertHexDigit(str[2*i]);
-        assertHexDigit(str[2*i+1]);
         arr[i] = parseInt(str[2*i], 16)*16 + parseInt(str[2*i+1], 16);
     }
     return newMessage(arr, true);
