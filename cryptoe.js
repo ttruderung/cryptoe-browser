@@ -535,6 +535,87 @@ cryptoe.symmetricKeyFromMessage = function (message) {
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// PUBLIC-KEY ENCRYPTION
+//
+
+/**
+ * Constructor for a decryption (private) key.
+ */
+function newDecryptionKey(cryptoPrivateKey) {
+    // the key object to be returned
+    var key = { _ck:cryptoPrivateKey };
+
+    key.decrypt = function (message) {
+        return crypto.subtle.decrypt({name: "RSA-OAEP"}, cryptoPrivateKey, message._rep())
+               .then(newMessageFromBuffer);
+    }
+
+    key.asMessage = function () {
+        return crypto.subtle.exportKey('pkcs8', cryptoPrivateKey).then(newMessageFromBuffer);
+    }
+
+    // Return the key (this) object
+    return key;
+};
+
+/**
+ * Constructor for an encryption (public) key.
+ */
+function newEncryptionKey(cryptoPublicKey) {
+    // the key object to be returned
+    var key = { _ck:cryptoPublicKey };
+
+    key.encrypt = function (message) {
+        return crypto.subtle.encrypt({name: "RSA-OAEP"}, cryptoPublicKey, message._rep())
+               .then(newMessageFromBuffer);
+    }
+
+    key.asMessage = function () {
+        return crypto.subtle.exportKey('spki', cryptoPublicKey).then(newMessageFromBuffer);
+    }
+
+    // Return the key (this) object
+    return key;
+};
+
+
+/**
+ * Generate a new public/private key pair.
+ *
+ */
+cryptoe.generateKeyPair = function () {
+    var options = { name:"RSA-OAEP",
+                    modulusLength: 2048, // 2048
+                    publicExponent: new Uint8Array([1, 0, 1]),  // 24 bit representation of 65537
+                    hash: {name: "SHA-256"}
+               };
+    return crypto.subtle.generateKey(options, true, ["encrypt", "decrypt"])
+           .then(function (keyPair) {
+               return { decryptionKey: newDecryptionKey(keyPair.privateKey),
+                        encryptionKey: newEncryptionKey(keyPair.publicKey)};
+           });
+}
+
+/**
+ * Convert a message to an encryption (public) key.
+ */
+cryptoe.encryptionKeyFromMessage = function (message) {
+    var algo = {name:"RSA-OAEP", hash: {name: "SHA-256"}};
+    return crypto.subtle.importKey('spki', message._rep().buffer, algo, true, ["encrypt"])
+            .then(newEncryptionKey);
+}
+
+/**
+ * Convert a message to a decryption (private) key.
+ */
+cryptoe.decryptionKeyFromMessage = function (message) {
+    var algo = {name:"RSA-OAEP", hash: {name: "SHA-256"}};
+    return crypto.subtle.importKey('pkcs8', message._rep().buffer, algo, true, ["decrypt"])
+            .then(newDecryptionKey);
+}
+
 /////// END OF THE MODULE ///////
 return cryptoe;
 }());
+
