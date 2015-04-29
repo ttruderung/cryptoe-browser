@@ -343,7 +343,7 @@ function newMessage(bytes, owner) {
             bytes.buffer.byteLength < bytes.byteOffset + newSize) // or if there is not enough space
         { 
             // Reallocate:
-            var newBufferSize = (message.len() + numberOfNewBytes)*2; // twice as much as we need right now
+            var newBufferSize = newSize*2; // twice as much as we need right now
             reallocate(newBufferSize, newSize);
         }
         else { 
@@ -481,8 +481,7 @@ function newSymmetricKey(cryptoKey) {
         var algo = {name: "AES-GCM", iv: iv._rep(), tagLength: 128};
         return crypto.subtle.encrypt(algo, cryptoKey, message._rep())
                .then(function (raw_result) { 
-                    // Now we have the (raw) result of encryption.
-                    // Prepend this result with the IV:
+                    // Now we have the (raw) result of encryption. Prepend this result with the IV:
                     var result = cryptoe.emptyMessage();
                     result.appendMessage(iv);
                     result.appendMessage(newMessageFromBuffer(raw_result))
@@ -500,7 +499,7 @@ function newSymmetricKey(cryptoKey) {
                    return newMessageFromBuffer(res);
                })
                .catch(function (err) {
-                   throw new CryptoeError('Invalid Ciphertext');
+                   throw new CryptoeError('Invalid ciphertext');
                });
     }
 
@@ -531,7 +530,10 @@ cryptoe.generateSymmetricKey = function () {
 cryptoe.symmetricKeyFromMessage = function (message) {
     var algo = {name:"AES-GCM", length:128};
     return crypto.subtle.importKey('raw', message._rep().buffer, algo, true, ["encrypt", "decrypt"])
-            .then(newSymmetricKey);
+            .then(newSymmetricKey)
+            .catch(function (err) {
+                throw new CryptoeError('Invalid symmetric key');
+            });
 }
 
 
@@ -548,7 +550,8 @@ function newDecryptionKey(cryptoPrivateKey) {
 
     key.decrypt = function (message) {
         return crypto.subtle.decrypt({name: "RSA-OAEP"}, cryptoPrivateKey, message._rep())
-               .then(newMessageFromBuffer);
+               .then(newMessageFromBuffer)
+               .catch(function (err) { throw new CryptoeError('Invalid RSA ciphertext'); });
     }
 
     key.asMessage = function () {
@@ -568,7 +571,8 @@ function newEncryptionKey(cryptoPublicKey) {
 
     key.encrypt = function (message) {
         return crypto.subtle.encrypt({name: "RSA-OAEP"}, cryptoPublicKey, message._rep())
-               .then(newMessageFromBuffer);
+               .then(newMessageFromBuffer)
+               .catch(function (err) { throw new CryptoeError('Invalid plaintext (RSA)'); });
     }
 
     key.asMessage = function () {
@@ -586,7 +590,7 @@ function newEncryptionKey(cryptoPublicKey) {
  */
 cryptoe.generateKeyPair = function () {
     var options = { name:"RSA-OAEP",
-                    modulusLength: 2048, // 2048
+                    modulusLength: 2048,
                     publicExponent: new Uint8Array([1, 0, 1]),  // 24 bit representation of 65537
                     hash: {name: "SHA-256"}
                };
@@ -603,7 +607,10 @@ cryptoe.generateKeyPair = function () {
 cryptoe.encryptionKeyFromMessage = function (message) {
     var algo = {name:"RSA-OAEP", hash: {name: "SHA-256"}};
     return crypto.subtle.importKey('spki', message._rep().buffer, algo, true, ["encrypt"])
-            .then(newEncryptionKey);
+            .then(newEncryptionKey)
+            .catch(function (err) {
+                throw new CryptoeError('Invalid RSA key');
+            });
 }
 
 /**
@@ -612,7 +619,10 @@ cryptoe.encryptionKeyFromMessage = function (message) {
 cryptoe.decryptionKeyFromMessage = function (message) {
     var algo = {name:"RSA-OAEP", hash: {name: "SHA-256"}};
     return crypto.subtle.importKey('pkcs8', message._rep().buffer, algo, true, ["decrypt"])
-            .then(newDecryptionKey);
+            .then(newDecryptionKey)
+            .catch(function (err) {
+                throw new CryptoeError('Invalid RSA key');
+            });
 }
 
 /////// END OF THE MODULE ///////
