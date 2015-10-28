@@ -461,6 +461,23 @@ cryptoe.random = function(length) {
     return newMessage(r, false);
 }
 
+//////////////////////////////////////////////////////////////////////
+// HASH
+//
+
+/**
+ * Returns the hash (SHA-256) of the given message.
+ */
+cryptoe.hash = function(message) {
+    return crypto.subtle.digest("SHA-256", message._rep())
+           .then(function (res) {
+               return newMessageFromBuffer(res);
+           })
+           .catch(function (err) {
+               throw new CryptoeError('Problems with hashing');
+           });
+}
+
 
 //////////////////////////////////////////////////////////////////////
 // SYMMETRIC-KEY ENCRYPTION

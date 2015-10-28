@@ -169,5 +169,37 @@ describe('Crypto', function(){
         });
     });
 
+   describe('Hashing', function(){
+        it('returns different values for different messages', function(done) {
+            co(function*(){
+                var m1 = cryptoe.messageFromString('łąka!');
+                var m2 = cryptoe.messageFromString('łąka!!');
+                var h1 = yield cryptoe.hash(m1);
+                var h2 = yield cryptoe.hash(m2);
+                assert.notEqual(h1.toHexString(), h2.toHexString());
+                assert.equal(h1.len(), h2.len());
+            }).then(done,done);
+        });
+
+        it('returns the same value when called twice for the same message', function(done) {
+            co(function*(){
+                var m = cryptoe.messageFromString('łąka!');
+                var h1 = yield cryptoe.hash(m);
+                var h2 = yield cryptoe.hash(m);
+                assert.equal(h1.toHexString(), h2.toHexString());
+            }).then(done,done);
+        });
+        it('works for long messages and produces hashes of the same length as for short messages', function(done) {
+            co(function*(){
+                var m1 = cryptoe.messageFromString('łąka!');
+                var m2 = cryptoe.random(50000);
+                var h1 = yield cryptoe.hash(m1);
+                var h2 = yield cryptoe.hash(m2);
+                assert.equal(h1.len(), h2.len());
+            }).then(done,done);
+        });
+   });
+
+
 });  
 
