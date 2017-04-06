@@ -643,7 +643,7 @@ cryptoe.decryptionKeyFromMessage = function (message) {
 }
 
 //////////////////////////////////////////////////////////////////////
-// PUBLIC-KEY ENCRYPTION
+// DIGITAL SIGNATURES
 //
 
 /**
