@@ -3,9 +3,9 @@
  * high-level crypto library providing easy interoperability
  * between client- and server-side environments.
  *
- * @author Tomasz Truderung
+ * @author Tomasz Truderung (ttruderung@gmail.com)
  *
- * Copyright (c) 2015 Tomasz Truderung
+ * Copyright (c) 2015-2017 Tomasz Truderung
  */
 
 var cryptoe = (function() {
@@ -640,6 +640,37 @@ cryptoe.decryptionKeyFromMessage = function (message) {
             .catch(function (err) {
                 throw new CryptoeError('Invalid RSA key');
             });
+}
+
+//////////////////////////////////////////////////////////////////////
+// PUBLIC-KEY ENCRYPTION
+//
+
+/**
+ * Constructor for a verification (public) key.
+ */
+function newVerificationKey(cryptoVerifKey) {
+    var key = {};
+
+    key.verify = function (signature, message) {
+        return crypto.subtle.verify({name: "RSASSA-PKCS1-v1_5"}, cryptoVerifKey, signature._rep(), message._rep())
+               .catch(function (err) { throw new CryptoeError('Verification error (RSA)'); });
+    }
+
+    return key;
+};
+
+/**
+ * Convert a message to an verification (public) key.
+ */
+cryptoe.verificationKeyFromMessage = function (message) {
+    var algo = {name: "RSASSA-PKCS1-v1_5", hash: {name: "SHA-256"}};
+    return crypto.subtle.importKey("spki", message._rep(), algo, true, ["verify"])
+          .then(newVerificationKey)
+          .catch(function (err) {
+              throw new CryptoeError('Invalid RSA (verification) key');
+           });
+
 }
 
 /////// END OF THE MODULE ///////

@@ -200,6 +200,49 @@ describe('Crypto', function(){
         });
    });
 
+   describe('Verification of digital signatures', () => {
+       it('works for some fixtures', done => {
+           var message = cryptoe.messageFromHexString("aabbcc");
+           var keyMsg = cryptoe.messageFromHexString("30820122300d06092a864886f70d01010105000382010f003082010a0282010100bbc992fd7884dbb877e25144557e31d71b24d102c1597459d849a580f70adfadef95804f1a9a85e1938e008bc33811dc7f6c3bec9b2e51f14901feb50744a340535afcc80aa53b32ea8d36f5bdd96f18988732551381e0f558959d78c8166f096bcc26710dd0c6c89b49203d0090650408e651ddc5d1cf148c0c70c9a66f7adde300d88d5c6ab5562a775efc701652d908aefce0b7c24baddd3b5aa3a42b19a1ec82873e334509c28cca13b5bf0f36611c0c347cdef0cc85eef2286d32a34437937a13ed63cc7f305842dd7a582163bf1fee8dd9cbee0acbc0cb6cc66f6415cfa7732e0951faeaa9dc725c3df047721c87124719372f007e7dfaa5b776d297d30203010001");
+           var signature = cryptoe.messageFromHexString("0eea2ab09b2bd6d06a96b259799bb3fa1e6e420b1b8420c2332230c558203a5e653c23edd4fb40866df9868a2284f9c03b1a418af8d1826a18481c433dec5f3073327056f09f50dc34f0255127e0bf792c758d2dd6f7869f40e145b9d91a8a943e08a91dbc96b9ab77a414240517fa821548465957462fc35b44c8a6ea259cdb0d07fbe1ba4758630bbba8c8493c7daad021d6ff62787425d9108bd8a461f3aeb94cf02868230c69001fae449e1b9d8d24b9c4d183446331dafc2a2be0db62d5da83dd2e5667ceda1c4f5428ed07d6c438713e5268be21cb5d20c8384117f434bacbaf9537f3c6f2edd06fd0bdc758cfdc25fc41f564641513dad50bb39ecbbd");
 
+           cryptoe.verificationKeyFromMessage(keyMsg)
+           .then(vk => vk.verify(signature, message))
+           .then(res => assert.ok(res, "signature verification returned false"))
+           .then(done, done);
+       });
+
+       it('fails for invalid signature', done => {
+           var message = cryptoe.messageFromHexString("aabbcc");
+           var keyMsg = cryptoe.messageFromHexString("30820122300d06092a864886f70d01010105000382010f003082010a0282010100bbc992fd7884dbb877e25144557e31d71b24d102c1597459d849a580f70adfadef95804f1a9a85e1938e008bc33811dc7f6c3bec9b2e51f14901feb50744a340535afcc80aa53b32ea8d36f5bdd96f18988732551381e0f558959d78c8166f096bcc26710dd0c6c89b49203d0090650408e651ddc5d1cf148c0c70c9a66f7adde300d88d5c6ab5562a775efc701652d908aefce0b7c24baddd3b5aa3a42b19a1ec82873e334509c28cca13b5bf0f36611c0c347cdef0cc85eef2286d32a34437937a13ed63cc7f305842dd7a582163bf1fee8dd9cbee0acbc0cb6cc66f6415cfa7732e0951faeaa9dc725c3df047721c87124719372f007e7dfaa5b776d297d30203010001");
+           var signature = cryptoe.messageFromHexString("07ea2ab09b2bd6d06a96b259799bb3fa1e6e420b1b8420c2332230c558203a5e653c23edd4fb40866df9868a2284f9c03b1a418af8d1826a18481c433dec5f3073327056f09f50dc34f0255127e0bf792c758d2dd6f7869f40e145b9d91a8a943e08a91dbc96b9ab77a414240517fa821548465957462fc35b44c8a6ea259cdb0d07fbe1ba4758630bbba8c8493c7daad021d6ff62787425d9108bd8a461f3aeb94cf02868230c69001fae449e1b9d8d24b9c4d183446331dafc2a2be0db62d5da83dd2e5667ceda1c4f5428ed07d6c438713e5268be21cb5d20c8384117f434bacbaf9537f3c6f2edd06fd0bdc758cfdc25fc41f564641513dad50bb39ecbbd");
+
+           cryptoe.verificationKeyFromMessage(keyMsg)
+           .then(vk => vk.verify(signature, message))
+           .then(res => assert.ok(!res, "signature verification returned false"))
+           .then(done,done);
+       });
+
+       it('fails for different message', done => {
+           var message = cryptoe.messageFromHexString("8abbcc");
+           var keyMsg = cryptoe.messageFromHexString("30820122300d06092a864886f70d01010105000382010f003082010a0282010100bbc992fd7884dbb877e25144557e31d71b24d102c1597459d849a580f70adfadef95804f1a9a85e1938e008bc33811dc7f6c3bec9b2e51f14901feb50744a340535afcc80aa53b32ea8d36f5bdd96f18988732551381e0f558959d78c8166f096bcc26710dd0c6c89b49203d0090650408e651ddc5d1cf148c0c70c9a66f7adde300d88d5c6ab5562a775efc701652d908aefce0b7c24baddd3b5aa3a42b19a1ec82873e334509c28cca13b5bf0f36611c0c347cdef0cc85eef2286d32a34437937a13ed63cc7f305842dd7a582163bf1fee8dd9cbee0acbc0cb6cc66f6415cfa7732e0951faeaa9dc725c3df047721c87124719372f007e7dfaa5b776d297d30203010001");
+           var signature = cryptoe.messageFromHexString("0eea2ab09b2bd6d06a96b259799bb3fa1e6e420b1b8420c2332230c558203a5e653c23edd4fb40866df9868a2284f9c03b1a418af8d1826a18481c433dec5f3073327056f09f50dc34f0255127e0bf792c758d2dd6f7869f40e145b9d91a8a943e08a91dbc96b9ab77a414240517fa821548465957462fc35b44c8a6ea259cdb0d07fbe1ba4758630bbba8c8493c7daad021d6ff62787425d9108bd8a461f3aeb94cf02868230c69001fae449e1b9d8d24b9c4d183446331dafc2a2be0db62d5da83dd2e5667ceda1c4f5428ed07d6c438713e5268be21cb5d20c8384117f434bacbaf9537f3c6f2edd06fd0bdc758cfdc25fc41f564641513dad50bb39ecbbd");
+
+           cryptoe.verificationKeyFromMessage(keyMsg)
+           .then(vk => vk.verify(signature, message))
+           .then(res => assert.ok(!res, "signature verification returned false"))
+           .then(done, done);
+       });
+
+       it('fails for wrong keys', done => {
+           var message = cryptoe.messageFromHexString("aabbcc");
+           var keyMsg = cryptoe.messageFromHexString("308201300d06092a864886f70d01010105000382010f003082010a0282010100bbc992fd7884dbb877e25144557e31d71b24d102c1597459d849a580f70adfadef95804f1a9a85e1938e008bc33811dc7f6c3bec9b2e51f14901feb50744a340535afcc80aa53b32ea8d36f5bdd96f18988732551381e0f558959d78c8166f096bcc26710dd0c6c89b49203d0090650408e651ddc5d1cf148c0c70c9a66f7adde300d88d5c6ab5562a775efc701652d908aefce0b7c24baddd3b5aa3a42b19a1ec82873e334509c28cca13b5bf0f36611c0c347cdef0cc85eef2286d32a34437937a13ed63cc7f305842dd7a582163bf1fee8dd9cbee0acbc0cb6cc66f6415cfa7732e0951faeaa9dc725c3df047721c87124719372f007e7dfaa5b776d297d30203010001");
+           var signature = cryptoe.messageFromHexString("0eea2ab09b2bd6d06a96b259799bb3fa1e6e420b1b8420c2332230c558203a5e653c23edd4fb40866df9868a2284f9c03b1a418af8d1826a18481c433dec5f3073327056f09f50dc34f0255127e0bf792c758d2dd6f7869f40e145b9d91a8a943e08a91dbc96b9ab77a414240517fa821548465957462fc35b44c8a6ea259cdb0d07fbe1ba4758630bbba8c8493c7daad021d6ff62787425d9108bd8a461f3aeb94cf02868230c69001fae449e1b9d8d24b9c4d183446331dafc2a2be0db62d5da83dd2e5667ceda1c4f5428ed07d6c438713e5268be21cb5d20c8384117f434bacbaf9537f3c6f2edd06fd0bdc758cfdc25fc41f564641513dad50bb39ecbbd");
+
+           cryptoe.verificationKeyFromMessage(keyMsg)
+           .then(errorExpected(done))
+           .catch(errorExpected(done));
+       });
+   });
 });  
 
